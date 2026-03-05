@@ -6,24 +6,25 @@ const app = express();
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:5174",
-      "https://proyectofotolibro.com",
-      "https://www.proyectofotolibro.com",
-    ],
+    origin: (origin, cb) => {
+      // Permitir requests sin origin (curl, server-to-server)
+      if (!origin) return cb(null, true);
+
+      const allowed = [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "https://proyectofotolibro.com",
+        "https://www.proyectofotolibro.com",
+      ];
+
+      // Permitir previews de Vercel del front
+      const isVercelPreview =
+        origin.endsWith(".vercel.app") || origin.endsWith(".vercel.app/");
+
+      if (allowed.includes(origin) || isVercelPreview) return cb(null, true);
+
+      return cb(new Error("Not allowed by CORS"));
+    },
+    credentials: false,
   })
 );
-
-app.use(express.json());
-
-app.use("/fotolibros", photobookRoutes);
-
-module.exports = app;
-
-if (require.main === module) {
-  const PORT = process.env.PORT || 3001;
-  app.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
-  });
-}
