@@ -7,7 +7,6 @@ const app = express();
 app.use(
   cors({
     origin: (origin, cb) => {
-      // Permitir requests sin origin (curl, server-to-server)
       if (!origin) return cb(null, true);
 
       const allowed = [
@@ -17,14 +16,18 @@ app.use(
         "https://www.proyectofotolibro.com",
       ];
 
-      // Permitir previews de Vercel del front
-      const isVercelPreview =
-        origin.endsWith(".vercel.app") || origin.endsWith(".vercel.app/");
+      if (allowed.includes(origin)) return cb(null, true);
+      if (origin.endsWith(".vercel.app")) return cb(null, true);
 
-      if (allowed.includes(origin) || isVercelPreview) return cb(null, true);
-
-      return cb(new Error("Not allowed by CORS"));
+      return cb(null, false);
     },
-    credentials: false,
   })
 );
+
+app.use(express.json());
+
+app.get("/", (req, res) => res.status(200).send("ok"));
+
+app.use("/fotolibros", photobookRoutes);
+
+module.exports = app;
